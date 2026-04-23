@@ -1,187 +1,158 @@
-# Claude Code Local — 16GB Edition
+# Code Local 16GB
 
-A fork of [claude-code-local](https://github.com/nicedreamzapp/claude-code-local) optimized for **Mac Mini M4 and other Apple Silicon Macs with 16 GB of unified memory**.
+Run large language models locally on your **Mac Mini M4 (16 GB RAM)** and connect from any device on your network — Windows, Linux, or another Mac.
 
-Run [Claude Code](https://claude.ai/code) with local open-source models instead of Anthropic's cloud API. Your code never leaves your machine.
+**No cloud. No API fees. Your data never leaves your home network.**
 
-## Why this fork?
+## What is this?
 
-The original project targets high-end Macs (64–128 GB RAM) with massive models like Qwen 3.5 122B and Llama 3.3 70B. Those simply don't fit on a 16 GB Mac.
+A fork of [claude-code-local](https://github.com/nicedreamzapp/claude-code-local) optimized for **16 GB Apple Silicon Macs**. The original targets 64–128 GB machines with massive models. This edition curates **14B-parameter models** that actually fit in 16 GB of unified memory while maximizing code quality and minimizing hallucinations.
 
-This edition curates a **16GB-friendly model lineup** that actually fits in your RAM while maximizing code quality and minimizing hallucinations.
+| Model | Size | RAM Used | Best For |
+|-------|------|----------|----------|
+| **Phi-4 14B** ⭐ | ~7.7 GB | ~10 GB | **Lowest hallucinations**, general coding |
+| **Qwen3 14B** | ~8.3 GB | ~11 GB | Long context, large codebases |
+| **Qwen2.5 Coder 14B** | ~8 GB | ~11 GB | Code-specific tasks, refactoring |
 
-| Model | Size | RAM Used | Speed | Best For |
-|-------|------|----------|-------|----------|
-| **Phi-4 14B** ⭐ | ~7.7 GB | ~10 GB | ~20 tok/s | **Lowest hallucinations**, general coding |
-| **Qwen3 14B** | ~8.3 GB | ~11 GB | ~18 tok/s | Long context, large codebases |
-| **Qwen2.5 Coder 14B** | ~8 GB | ~11 GB | ~18 tok/s | Code-specific tasks, refactoring |
+> ⭐ **Recommended:** Phi-4 14B scores highest on formal hallucination benchmarks and runs comfortably within 16 GB.
 
-> ⭐ **Recommended:** Phi-4 14B scores highest on formal hallucination benchmarks (PHANTOM F1: 0.885) and runs comfortably within 16 GB.
+## How it works
+
+```
+┌─────────────────┐      HTTP (WiFi/Ethernet)      ┌─────────────────────┐
+│  Your Computer  │  ─────────────────────────────► │   Mac Mini M4       │
+│  (Windows/Mac)  │                                 │   MLX Server        │
+│  Open WebUI     │  ◄───────────────────────────── │   Phi-4 / Qwen3     │
+└─────────────────┘                                 └─────────────────────┘
+```
+
+The Mac Mini runs a Python server that loads an MLX model and exposes an **OpenAI-compatible API**. Your computer connects to it like any other AI service — but everything happens inside your home.
 
 ## Requirements
 
 - **Mac with Apple Silicon** (M1/M2/M3/M4)
 - **16 GB unified memory** (also works on 8 GB and 32 GB with auto-detection)
 - **macOS Sonoma or later**
-- **Claude Code CLI** installed (`npm install -g @anthropic-ai/claude-code`)
+- **Xcode Command Line Tools** (for `git`; install with `xcode-select --install`)
+- **Node.js/npm** (only if you want to try Claude Code as client; Open WebUI does not need it)
 
-## Quick Start
+## Mac Mini Setup (Server)
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/alex-milla/Code-Local-16Gb.git
-cd claude-code-local-16gb
+cd Code-Local-16Gb
+```
+
+> If `git` is not found, install Xcode Command Line Tools first: `xcode-select --install`
+
+### 2. Run the installer
+
+```bash
 bash setup.sh
 ```
 
-`setup.sh` will ask you two things:
-1. **Deployment mode**: Local (everything on this Mac) or Server (this Mac runs models, Claude Code runs on another computer)
-2. Then it installs Python 3.12, `mlx-lm`, downloads the model, and creates launchers
+You will be asked to choose a mode:
+- **[1] LOCAL** — Everything on the Mac Mini (server + client)
+- **[2] SERVER** — Mac Mini is the AI brain only; you use a client from another computer
 
-Then **double-click any launcher on your Desktop** to start coding locally.
+Choose **2** for the setup described in this guide.
 
-### Mode 1: Local (default)
-Everything runs on the Mac Mini. Claude Code + models on the same machine.
+The script will:
+1. Install Homebrew (if missing)
+2. Install Python 3.12 and `mlx-lm`
+3. Download the recommended model (Phi-4 14B, ~7.7 GB, one-time download)
+4. Create launchers on your Desktop
 
-### Mode 2: Server
-The Mac Mini acts as an AI inference server. You run Claude Code from another computer (Windows, Linux, or another Mac) on the same network.
-
-```
-🖥️  Your Windows/Mac/Linux          🍎  Mac Mini M4 (server)
-        │                                   │
-   Claude Code                            MLX Server
-   (npm install)                          (proxy/server.py)
-        │                                   │
-        └─────────── HTTP ─────────────────┘
-              ANTHROPIC_BASE_URL=http://mac-mini-ip:4000
-```
-
-**On the remote computer:**
-```powershell
-$env:ANTHROPIC_BASE_URL = "http://192.168.1.X:4000"
-$env:ANTHROPIC_API_KEY = "sk-local"
-claude --model claude-sonnet-4-6
-```
-
-> Both computers must be on the same WiFi/Ethernet. The Mac Mini must stay on. macOS may ask to allow Python through the Firewall — click **Allow**.
-
-## Manual Start
+### 3. Start the server
 
 ```bash
-# 1. Set up the MLX virtualenv
-python3.12 -m venv ~/.local/mlx-server
-~/.local/mlx-server/bin/pip install mlx-lm
-
-# 2. Start the server with a 16GB-friendly model
-MLX_MODEL=mlx-community/phi-4-4bit bash scripts/start-mlx-server.sh
-
-# 3. Launch Claude Code
-ANTHROPIC_BASE_URL=http://localhost:4000 \
-ANTHROPIC_API_KEY=sk-local \
-claude --model claude-sonnet-4-6
+MLX_BIND_HOST=0.0.0.0 bash scripts/start-mlx-server.sh
 ```
 
-## Available Models
+The server will listen on all network interfaces (`0.0.0.0:4000`) so other devices can connect.
 
-All models are pulled automatically from [Hugging Face mlx-community](https://huggingface.co/mlx-community) on first run.
+**Do not close this Terminal window.** The server must stay running.
 
-| Model ID | Parameters | Disk | Notes |
-|----------|-----------|------|-------|
-| `mlx-community/phi-4-4bit` | 14B | ~7.7 GB | Microsoft. Best reasoning, lowest hallucinations. MIT license. |
-| `mlx-community/Qwen3-14B-4bit` | 14B | ~8.3 GB | Alibaba. Excellent long-context handling. |
-| `mlx-community/Qwen2.5-Coder-14B-Instruct-4bit` | 14B | ~8 GB | Alibaba. Specialized for code generation. |
+---
 
-### Memory tips for 16 GB Macs
+## Client Setup (Windows / Linux / Mac)
+
+### Recommended client: Open WebUI
+
+Open WebUI is a web-based chat interface that connects to any OpenAI-compatible API.
+
+1. **Install Open WebUI** on your client computer (see [Open WebUI docs](https://docs.openwebui.com/))
+2. **Open Settings** → **Admin Settings** → **Connections**
+3. **Add a Direct Connection** (OpenAI Compatible):
+   - **URL:** `http://YOUR_MAC_IP:4000/v1`
+   - **Auth:** Bearer `sk-local`
+   - **Provider Type:** OpenAI
+4. **Save** and reload
+
+Your model will appear as `phi-4` (or whichever model you loaded) in the chat dropdown.
+
+### Alternative client: Claude Code
+
+> ⚠️ Claude Code is closed-source software from Anthropic. Recent versions may ignore custom `ANTHROPIC_BASE_URL` settings if you have leftover environment variables from previous installs (e.g., Ollama).
+
+If you want to try Claude Code as client:
+
+```powershell
+# Windows PowerShell
+$env:ANTHROPIC_BASE_URL = "http://YOUR_MAC_IP:4000"
+$env:ANTHROPIC_API_KEY = "sk-local"
+claude --bare
+```
+
+**Troubleshooting Claude Code:** If you get "Auth conflict" errors, check for stale environment variables:
+
+```powershell
+# Check for leftover Ollama or Anthropic variables
+Get-ChildItem Env: | Where-Object { $_.Name -like "ANTHROPIC*" }
+```
+
+Remove any `ANTHROPIC_AUTH_TOKEN` or old `ANTHROPIC_BASE_URL` variables from **System Environment Variables** (Windows key → "Edit the system environment variables" → "Environment Variables").
+
+---
+
+## Memory tips for 16 GB Macs
 
 - **Close browsers and heavy apps** before starting the server
 - **Enable KV-cache quantization** for long conversations:
   ```bash
-  MLX_KV_BITS=8 MLX_MODEL=mlx-community/phi-4-4bit bash scripts/start-mlx-server.sh
+  MLX_KV_BITS=8 MLX_BIND_HOST=0.0.0.0 bash scripts/start-mlx-server.sh
   ```
 - **Restart the server** between long sessions to free accumulated KV cache
 
-## How It Works
+---
 
-```
-┌─────────────────────────────────────────────┐
-│              YOUR MAC (16 GB)               │
-│                                             │
-│  📝 You type ──> 🤖 Claude Code             │
-│                      │                      │
-│                      ▼                      │
-│                 ⚡ MLX Server (port 4000)   │
-│                      │                      │
-│                      ▼                      │
-│                 🥊 Local model (Phi-4 etc.) │
-│                      │                      │
-│                      ▼                      │
-│  📝 Answer <─── ✨ Clean response           │
-│                                             │
-│         🔒 Nothing leaves this box.         │
-└─────────────────────────────────────────────┘
+## Updating the server
+
+If you `git pull` updates on the Mac Mini, restart the server to apply changes:
+
+```bash
+cd ~/Code-Local-16Gb
+git pull
+MLX_BIND_HOST=0.0.0.0 bash scripts/start-mlx-server.sh
 ```
 
-The server (`proxy/server.py`) is a single Python file that:
-1. Loads an MLX model natively on your Apple GPU
-2. Exposes an Anthropic-compatible API on `localhost:4000`
-3. Translates tool calls between Claude Code's format and the model's native format
-4. Strips thinking tags and reasoning artifacts from model output
-5. Reuses prompt caches across requests for speed
+---
 
 ## Project Structure
 
 ```
-claude-code-local-16gb/
- ├── proxy/
- │   └── server.py                 ← MLX Native Anthropic Server
- ├── launchers/
- │   ├── Claude Local.command      ← Default (Phi-4 14B)
- │   ├── Qwen3 14B.command         ← Long-context model
- │   ├── Qwen2.5 Coder 14B.command ← Code-specialized model
- │   └── lib/
- │       └── claude-local-common.sh ← Shared helpers
- ├── scripts/
- │   └── start-mlx-server.sh       ← Server start helper
- ├── setup.sh                      ← One-command installer
- └── README.md                     ← You are here
+Code-Local-16Gb/
+ ├── proxy/server.py          ← MLX server (Anthropic + OpenAI API)
+ ├── setup.sh                  ← One-command installer
+ ├── launchers/                ← Desktop launchers for the Mac
+ ├── scripts/start-mlx-server.sh
+ └── README.md
 ```
 
-## Differences from upstream
-
-| | Original | This fork |
-|---|---|---|
-| Target RAM | 64–128 GB | **16 GB** |
-| Default model | Gemma 4 31B / Qwen 122B | **Phi-4 14B** |
-| Model lineup | 3 huge models | **3 curated 14B models** |
-| KV cache default | Full precision | **Auto + docs for 8-bit** |
-| iMessage / Voice / Browser | Bundled / referenced | **Removed** (focus on core coding) |
-
-## Troubleshooting
-
-### "Model uses too much memory" or Mac freezes
-- Close Safari/Chrome tabs before starting
-- Use `MLX_KV_BITS=8` to quantize the KV cache
-- Switch to a smaller model
-
-### "Claude Code asks me to log in"
-Your `claude` CLI is too old. Update it:
-```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-### Server won't start
-Check the log:
-```bash
-cat /tmp/mlx-server.log
-```
-
-## Credits
-
-- Original concept and server architecture: [Matt Macosko / nicedreamzapp](https://github.com/nicedreamzapp/claude-code-local)
-- MLX framework: [Apple](https://github.com/ml-explore/mlx)
-- Phi-4: [Microsoft](https://huggingface.co/microsoft/phi-4)
-- Qwen3 / Qwen2.5 Coder: [Alibaba](https://qwenlm.github.io/)
-- Quantized MLX models: [mlx-community](https://huggingface.co/mlx-community)
+---
 
 ## License
 
-MIT — same as the original project.
+MIT
