@@ -312,7 +312,7 @@ echo "╠═══════════════════════�
 echo "║                                                  ║"
 echo "║  Model:    $MODEL_ID"
 echo "║  Server:   $SERVER_DIR/server.py"
-echo "║  Mode:     ${DEPLOY_MODE^^}"
+echo "║  Mode:     $(echo "$DEPLOY_MODE" | tr '[:lower:]' '[:upper:]')"
 echo "║  Bind:     $BIND_HOST:4000"
 echo "║                                                  ║"
 if [ "$DEPLOY_MODE" = "server" ]; then
