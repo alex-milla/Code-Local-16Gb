@@ -970,6 +970,60 @@ def get_path(full_path):
     return urlparse(full_path).path
 
 
+# ─── OpenAI compatibility ────────────────────────────────────────────────────
+
+def openai_to_anthropic_body(openai_body):
+    """Convert an OpenAI Chat Completions request to Anthropic Messages format."""
+    anthropic = {
+        "model": openai_body.get("model", "claude-sonnet-4-6"),
+        "max_tokens": openai_body.get("max_tokens", DEFAULT_MAX_TOKENS),
+        "temperature": openai_body.get("temperature", 0.2),
+        "messages": [],
+    }
+    if "tools" in openai_body:
+        anthropic["tools"] = openai_body["tools"]
+    for msg in openai_body.get("messages", []):
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        if role == "system":
+            anthropic["system"] = content
+        else:
+            anthropic["messages"].append({"role": role, "content": content})
+    return anthropic
+
+
+def anthropic_to_openai_response(anthropic_result):
+    """Convert an Anthropic Messages response to OpenAI Chat Completions format."""
+    content_text = ""
+    for block in anthropic_result.get("content", []):
+        if block.get("type") == "text":
+            content_text += block.get("text", "")
+    return {
+        "id": anthropic_result.get("id", "chatcmpl-local"),
+        "object": "chat.completion",
+        "created": int(time.time()),
+        "model": anthropic_result.get("model", "local"),
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": content_text,
+                },
+                "finish_reason": anthropic_result.get("stop_reason", "stop"),
+            }
+        ],
+        "usage": {
+            "prompt_tokens": anthropic_result.get("usage", {}).get("input_tokens", 0),
+            "completion_tokens": anthropic_result.get("usage", {}).get("output_tokens", 0),
+            "total_tokens": (
+                anthropic_result.get("usage", {}).get("input_tokens", 0)
+                + anthropic_result.get("usage", {}).get("output_tokens", 0)
+            ),
+        },
+    }
+
+
 class AnthropicHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
@@ -991,7 +1045,6 @@ class AnthropicHandler(BaseHTTPRequestHandler):
         if path in ("/v1/messages", "/messages"):
             try:
                 result = generate_response(body)
-                # Log preview of first content block
                 first = result["content"][0]
                 if first["type"] == "text":
                     preview = first.get("text", "")[:80]
@@ -1004,6 +1057,20 @@ class AnthropicHandler(BaseHTTPRequestHandler):
                 import traceback
                 traceback.print_exc(file=sys.stderr)
                 send_json(self, 500, {"error": {"type": "server_error", "message": str(e)}})
+
+        elif path == "/v1/chat/completions":
+            try:
+                anthropic_body = openai_to_anthropic_body(body)
+                result = generate_response(anthropic_body)
+                openai_result = anthropic_to_openai_response(result)
+                log(f"  ← OK OpenAI ({openai_result['usage']['completion_tokens']} tok)")
+                send_json(self, 200, openai_result)
+            except Exception as e:
+                log(f"  ← ERROR: {e}")
+                import traceback
+                traceback.print_exc(file=sys.stderr)
+                send_json(self, 500, {"error": {"type": "server_error", "message": str(e)}})
+
         else:
             log(f"  Unknown POST: {path}")
             send_json(self, 200, {})
