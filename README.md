@@ -33,13 +33,36 @@ cd claude-code-local-16gb
 bash setup.sh
 ```
 
-`setup.sh` will:
-1. Detect your RAM
-2. Install Python 3.12 and `mlx-lm` if missing
-3. Download the recommended model for your hardware
-4. Create desktop launchers
+`setup.sh` will ask you two things:
+1. **Deployment mode**: Local (everything on this Mac) or Server (this Mac runs models, Claude Code runs on another computer)
+2. Then it installs Python 3.12, `mlx-lm`, downloads the model, and creates launchers
 
 Then **double-click any launcher on your Desktop** to start coding locally.
+
+### Mode 1: Local (default)
+Everything runs on the Mac Mini. Claude Code + models on the same machine.
+
+### Mode 2: Server
+The Mac Mini acts as an AI inference server. You run Claude Code from another computer (Windows, Linux, or another Mac) on the same network.
+
+```
+🖥️  Your Windows/Mac/Linux          🍎  Mac Mini M4 (server)
+        │                                   │
+   Claude Code                            MLX Server
+   (npm install)                          (proxy/server.py)
+        │                                   │
+        └─────────── HTTP ─────────────────┘
+              ANTHROPIC_BASE_URL=http://mac-mini-ip:4000
+```
+
+**On the remote computer:**
+```powershell
+$env:ANTHROPIC_BASE_URL = "http://192.168.1.X:4000"
+$env:ANTHROPIC_API_KEY = "sk-local"
+claude --model claude-sonnet-4-6
+```
+
+> Both computers must be on the same WiFi/Ethernet. The Mac Mini must stay on. macOS may ask to allow Python through the Firewall — click **Allow**.
 
 ## Manual Start
 

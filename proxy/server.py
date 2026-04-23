@@ -43,6 +43,7 @@ from mlx_lm.models.cache import make_prompt_cache
 
 MODEL_PATH = os.environ.get("MLX_MODEL", "mlx-community/phi-4-4bit")
 PORT = int(os.environ.get("MLX_PORT", "4000"))
+BIND_HOST = os.environ.get("MLX_BIND_HOST", "127.0.0.1")
 KV_BITS = int(os.environ.get("MLX_KV_BITS", "0"))  # Set to 8 on 16GB Macs for long contexts
 PREFILL_SIZE = int(os.environ.get("MLX_PREFILL_SIZE", "8192"))
 DEFAULT_MAX_TOKENS = int(os.environ.get("MLX_MAX_TOKENS", "8192"))
@@ -1040,18 +1041,18 @@ if __name__ == "__main__":
     load_model()
 
     print()
-    print(f"Serving Anthropic Messages API on http://localhost:{PORT}")
+    print(f"Serving Anthropic Messages API on http://{BIND_HOST}:{PORT}")
     print(f"Model: {MODEL_PATH}")
     print(f"KV cache: {KV_BITS}-bit quantization (start at token {KV_QUANT_START})" if KV_BITS else "KV cache: full precision")
     print(f"Prompt cache: enabled (KV reuse across requests)")
     print(f"Tool retry: up to {MAX_TOOL_RETRIES} retries on garbled tool calls")
     print()
     print("Claude Code config:")
-    print(f"  ANTHROPIC_BASE_URL=http://localhost:{PORT}")
+    print(f"  ANTHROPIC_BASE_URL=http://{BIND_HOST}:{PORT}")
     print(f"  ANTHROPIC_API_KEY=sk-local")
     print()
 
-    server = HTTPServer(("127.0.0.1", PORT), AnthropicHandler)
+    server = HTTPServer((BIND_HOST, PORT), AnthropicHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
