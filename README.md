@@ -28,7 +28,7 @@ This edition curates a **16GB-friendly model lineup** that actually fits in your
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-code-local-16gb.git
+git clone https://github.com/alex-milla/Code-Local-16Gb.git
 cd claude-code-local-16gb
 bash setup.sh
 ```
