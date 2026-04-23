@@ -42,6 +42,26 @@ from mlx_lm.models.cache import make_prompt_cache
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 MODEL_PATH = os.environ.get("MLX_MODEL", "mlx-community/phi-4-4bit")
+
+
+def get_model_display_name():
+    """Return a clean model ID based on the loaded model path."""
+    base = MODEL_PATH.split("/")[-1].lower()
+    # Strip common quant suffixes for a cleaner name
+    for suffix in ["-4bit", "-8bit", "-6bit", "-3bit", "-qat", "-mlx"]:
+        base = base.replace(suffix, "")
+    return base or "local-model"
+
+
+def get_model_list():
+    """Return model list with the actual loaded model name."""
+    name = get_model_display_name()
+    return {
+        "object": "list",
+        "data": [
+            {"id": name, "object": "model", "created": int(time.time()), "owned_by": "local"},
+        ]
+    }
 PORT = int(os.environ.get("MLX_PORT", "4000"))
 BIND_HOST = os.environ.get("MLX_BIND_HOST", "127.0.0.1")
 KV_BITS = int(os.environ.get("MLX_KV_BITS", "0"))  # Set to 8 on 16GB Macs for long contexts
@@ -944,7 +964,7 @@ def generate_response(body):
         "id": f"msg_{uuid.uuid4().hex[:24]}",
         "type": "message",
         "role": "assistant",
-        "model": body.get("model", "claude-sonnet-4-6"),
+        "model": body.get("model", get_model_display_name()),
         "content": content_blocks,
         "stop_reason": finish_reason,
         "stop_sequence": None,
@@ -1002,7 +1022,7 @@ def anthropic_to_openai_response(anthropic_result):
         "id": anthropic_result.get("id", "chatcmpl-local"),
         "object": "chat.completion",
         "created": int(time.time()),
-        "model": anthropic_result.get("model", "local"),
+        "model": anthropic_result.get("model", get_model_display_name()),
         "choices": [
             {
                 "index": 0,
@@ -1080,14 +1100,7 @@ class AnthropicHandler(BaseHTTPRequestHandler):
         log(f"GET {self.path}")
 
         if path in ("/v1/models", "/models"):
-            send_json(self, 200, {
-                "object": "list",
-                "data": [
-                    {"id": "claude-opus-4-6", "object": "model", "created": int(time.time()), "owned_by": "local"},
-                    {"id": "claude-sonnet-4-6", "object": "model", "created": int(time.time()), "owned_by": "local"},
-                    {"id": "claude-haiku-4-5-20251001", "object": "model", "created": int(time.time()), "owned_by": "local"},
-                ]
-            })
+            send_json(self, 200, get_model_list())
         elif path == "/health":
             send_json(self, 200, {"status": "ok", "model": MODEL_PATH})
         else:
