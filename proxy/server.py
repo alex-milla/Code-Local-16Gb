@@ -43,6 +43,13 @@ from mlx_lm.models.cache import make_prompt_cache
 
 MODEL_PATH = os.environ.get("MLX_MODEL", "mlx-community/phi-4-4bit")
 
+# Available models for auto-switching
+AVAILABLE_MODELS = {
+    "phi-4": "mlx-community/phi-4-4bit",
+    "qwen3-14b": "mlx-community/Qwen3-14B-4bit",
+    "qwen2.5-coder-14b": "mlx-community/Qwen2.5-Coder-14B-Instruct-4bit",
+}
+
 
 def get_model_display_name():
     """Return a clean model ID based on the loaded model path."""
@@ -54,14 +61,27 @@ def get_model_display_name():
 
 
 def get_model_list():
-    """Return model list with the actual loaded model name."""
-    name = get_model_display_name()
-    return {
-        "object": "list",
-        "data": [
-            {"id": name, "object": "model", "created": int(time.time()), "owned_by": "local"},
-        ]
-    }
+    """Return all available models."""
+    now = int(time.time())
+    data = []
+    for model_id, hf_path in AVAILABLE_MODELS.items():
+        data.append({"id": model_id, "object": "model", "created": now, "owned_by": "local"})
+    return {"object": "list", "data": data}
+
+
+def resolve_model_path(requested_model):
+    """Map a model ID from the request to a HuggingFace path."""
+    if not requested_model:
+        return MODEL_PATH
+    # Direct match in available models
+    if requested_model in AVAILABLE_MODELS:
+        return AVAILABLE_MODELS[requested_model]
+    # If it's already a full HF path, use it as-is
+    if "/" in requested_model:
+        return requested_model
+    # Fallback to currently loaded model
+    return MODEL_PATH
+
 PORT = int(os.environ.get("MLX_PORT", "4000"))
 BIND_HOST = os.environ.get("MLX_BIND_HOST", "127.0.0.1")
 KV_BITS = int(os.environ.get("MLX_KV_BITS", "0"))  # Set to 8 on 16GB Macs for long contexts
@@ -109,8 +129,11 @@ GEMMA4_CHAT_TEMPLATE = (
     "{% if add_generation_prompt %}<|turn>model\n{% endif %}"
 )
 
-def load_model():
-    global model, tokenizer, KV_BITS
+def load_model(model_path=None):
+    global model, tokenizer, KV_BITS, MODEL_PATH, _prompt_cache, _cached_token_prefix
+    target = model_path or MODEL_PATH
+    if model_path:
+        MODEL_PATH = model_path
     log(f"Loading model: {MODEL_PATH}")
     t0 = time.time()
     model, tokenizer = load(MODEL_PATH)
@@ -132,6 +155,10 @@ def load_model():
         KV_BITS = 0
 
     log(f"KV cache quantization: {KV_BITS}-bit" if KV_BITS else "KV cache: full precision")
+
+    # Reset prompt cache — it's tied to the old model
+    _prompt_cache = None
+    _cached_token_prefix = None
 
 
 # ─── Think Tag Stripping ────────────────────────────────────────────────────
@@ -736,6 +763,15 @@ _first_request = True
 def generate_response(body):
     """Run MLX inference and return Anthropic-formatted response."""
     global _first_request
+
+    # Auto-switch model if requested
+    requested_model = body.get("model", "")
+    target_path = resolve_model_path(requested_model)
+    if target_path != MODEL_PATH:
+        log(f"Model switch requested: {MODEL_PATH} → {target_path}")
+        with generate_lock:
+            load_model(target_path)
+            _first_request = True
 
     # In browser mode, strip Claude Code bloat before inference.
     # Otherwise, auto-detect Claude Code coding sessions and apply code mode.
