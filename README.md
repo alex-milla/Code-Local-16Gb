@@ -65,13 +65,23 @@ The script will:
 3. Download the recommended model (Phi-4 14B, ~7.7 GB, one-time download)
 4. Create launchers on your Desktop
 
-### 3. Start the server
+### 3. (Optional) Pre-download all models
+
+By default, each model is downloaded the first time you select it in Open WebUI. To download all 3 models upfront and avoid waiting later:
+
+```bash
+bash scripts/download-models.sh
+```
+
+This downloads ~24–28 GB total and caches them in `~/.cache/huggingface/hub/`.
+
+### 4. Start the server
 
 ```bash
 MLX_BIND_HOST=0.0.0.0 bash scripts/start-mlx-server.sh
 ```
 
-The server will listen on all network interfaces (`0.0.0.0:4000`) so other devices can connect.
+The server will listen on all network interfaces (`0.0.0.0:4000`) so other devices can connect. All 3 models (`phi-4`, `qwen3-14b`, `qwen2.5-coder-14b`) are exposed automatically.
 
 **Do not close this Terminal window.** The server must stay running.
 
@@ -91,7 +101,7 @@ Open WebUI is a web-based chat interface that connects to any OpenAI-compatible 
    - **Provider Type:** OpenAI
 4. **Save** and reload
 
-Your model will appear as `phi-4` (or whichever model you loaded) in the chat dropdown.
+All 3 models will appear in the chat dropdown: `phi-4`, `qwen3-14b`, and `qwen2.5-coder-14b`. Select any model — the server will load it automatically.
 
 ### Alternative client: Claude Code
 
@@ -148,6 +158,7 @@ Code-Local-16Gb/
  ├── setup.sh                  ← One-command installer
  ├── launchers/                ← Desktop launchers for the Mac
  ├── scripts/start-mlx-server.sh
+ ├── scripts/download-models.sh    ← Pre-download all models
  └── README.md
 ```
 
