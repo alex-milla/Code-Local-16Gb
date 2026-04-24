@@ -100,6 +100,21 @@ This creates a macOS LaunchAgent that runs the server in the background on every
 bash scripts/uninstall-auto-start.sh
 ```
 
+### Server control (stop / start / restart)
+
+Whether you use auto-start or manual mode, these scripts control the server:
+
+```bash
+# Start manually (foreground, Ctrl-C to stop)
+bash scripts/start-server.sh
+
+# Stop any running server (auto-start or manual)
+bash scripts/stop-server.sh
+
+# Stop and start again (useful after code updates)
+bash scripts/restart-server.sh
+```
+
 ---
 
 ## Client Setup (Windows / Linux / Mac)
@@ -176,7 +191,10 @@ Code-Local-16Gb/
  ├── proxy/server.py          ← MLX server (Anthropic + OpenAI API)
  ├── setup.sh                  ← One-command installer
  ├── launchers/                ← Desktop launchers for the Mac
- ├── scripts/start-mlx-server.sh
+ ├── scripts/start-server.sh       ← Start manually (foreground)
+ ├── scripts/stop-server.sh        ← Stop any running instance
+ ├── scripts/restart-server.sh     ← Stop + start (after updates)
+ ├── scripts/start-mlx-server.sh   ← Legacy launcher
  ├── scripts/download-models.sh    ← Pre-download all 4 models
  ├── scripts/install-auto-start.sh ← Auto-start on Mac boot
  ├── scripts/uninstall-auto-start.sh
