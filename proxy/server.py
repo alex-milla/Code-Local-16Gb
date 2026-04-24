@@ -22,6 +22,7 @@ at `~/.local/mlx-native-server/server.py` via a symlink, so edits here take
 effect on the running server after a restart — no re-copying needed.
 """
 
+import gc
 import json
 import os
 import re
@@ -129,6 +130,22 @@ GEMMA4_CHAT_TEMPLATE = (
     "{% endfor %}"
     "{% if add_generation_prompt %}<|turn>model\n{% endif %}"
 )
+
+def unload_model():
+    """Unload the current model from memory and free GPU cache."""
+    global model, tokenizer, _prompt_cache, _cached_token_prefix
+    if model is not None:
+        log("Unloading current model from memory...")
+        del model
+        del tokenizer
+        model = None
+        tokenizer = None
+        _prompt_cache = None
+        _cached_token_prefix = None
+        gc.collect()
+        mx.metal.clear_cache()
+        log("Model unloaded, memory freed.")
+
 
 def load_model(model_path=None):
     global model, tokenizer, KV_BITS, MODEL_PATH, _prompt_cache, _cached_token_prefix
@@ -765,14 +782,17 @@ def generate_response(body):
     """Run MLX inference and return Anthropic-formatted response."""
     global _first_request
 
-    # Manual model switching only: log a warning if the requested model
-    # differs from the currently loaded one, but do NOT auto-switch.
-    # The user must restart the server with MLX_MODEL=<id> to change models.
+    # Auto-switch model if the requested one differs from the currently loaded.
+    # This unloads the old model from memory before loading the new one to
+    # stay within the 16 GB budget on Apple Silicon Macs.
     requested_model = body.get("model", "")
     target_path = resolve_model_path(requested_model)
     if target_path != MODEL_PATH:
-        log(f"WARNING: Requested model '{requested_model}' does not match loaded model '{MODEL_PATH}'.")
-        log(f"  To switch models, restart the server with: MLX_MODEL={target_path}")
+        log(f"Model switch requested: {MODEL_PATH} → {target_path}")
+        with generate_lock:
+            unload_model()
+            load_model(target_path)
+            _first_request = True
 
     # In browser mode, strip Claude Code bloat before inference.
     # Otherwise, auto-detect Claude Code coding sessions and apply code mode.

@@ -116,14 +116,11 @@ Open WebUI is a web-based chat interface that connects to any OpenAI-compatible 
    - **Provider Type:** OpenAI
 4. **Save** and reload
 
-All 4 models will appear in the chat dropdown: `phi-4`, `qwen3-14b`, and `qwen2.5-coder-14b`. The server always runs the model specified at startup (`MLX_MODEL`). To switch models, restart the server with the desired model:
+All 4 models will appear in the chat dropdown: `phi-4`, `qwen3-14b`, `qwen2.5-coder-14b`, and `deepseek-r1-14b`.
 
-```bash
-# Stop the server with Ctrl-C, then start with a different model
-MLX_MODEL=mlx-community/Qwen3-14B-4bit MLX_BIND_HOST=0.0.0.0 bash scripts/start-mlx-server.sh
-```
+**The server automatically switches models** when you select a different one in Open WebUI. It unloads the previous model from memory before loading the new one to stay within the 16 GB budget. The switch takes ~10–30 seconds depending on the model size.
 
-> **Why manual?** On a 16 GB Mac, loading a model takes ~10–30 seconds and uses most of the RAM. Automatic switching could cause out-of-memory crashes if triggered accidentally. Manual switching keeps the server stable and predictable.
+> **Note:** If the requested model has never been downloaded, `mlx-lm` will fetch it from HuggingFace automatically on first use. This may take several minutes. Use `scripts/download-models.sh` to pre-download all models and avoid waiting.
 
 ### Alternative client: Claude Code
 
