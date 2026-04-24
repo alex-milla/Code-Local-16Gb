@@ -13,6 +13,7 @@ A fork of [claude-code-local](https://github.com/nicedreamzapp/claude-code-local
 | **Phi-4 14B** ⭐ | ~7.7 GB | ~10 GB | **Lowest hallucinations**, general coding |
 | **Qwen3 14B** | ~8.3 GB | ~11 GB | Long context, large codebases |
 | **Qwen2.5 Coder 14B** | ~8 GB | ~11 GB | Code-specific tasks, refactoring |
+| **DeepSeek-R1-Distill-Qwen-14B** | ~8 GB | ~11 GB | Reasoning, math, complex debugging |
 
 > ⭐ **Recommended:** Phi-4 14B scores highest on formal hallucination benchmarks and runs comfortably within 16 GB.
 
@@ -81,7 +82,7 @@ This downloads ~24–28 GB total and caches them in `~/.cache/huggingface/hub/`.
 MLX_BIND_HOST=0.0.0.0 bash scripts/start-mlx-server.sh
 ```
 
-The server will listen on all network interfaces (`0.0.0.0:4000`) so other devices can connect. All 3 models (`phi-4`, `qwen3-14b`, `qwen2.5-coder-14b`) are exposed automatically.
+The server will listen on all network interfaces (`0.0.0.0:4000`) so other devices can connect. All 4 models (`phi-4`, `qwen3-14b`, `qwen2.5-coder-14b`, `deepseek-r1-14b`) are exposed automatically.
 
 **Do not close this Terminal window.** The server must stay running.
 
@@ -101,7 +102,7 @@ Open WebUI is a web-based chat interface that connects to any OpenAI-compatible 
    - **Provider Type:** OpenAI
 4. **Save** and reload
 
-All 3 models will appear in the chat dropdown: `phi-4`, `qwen3-14b`, and `qwen2.5-coder-14b`. The server always runs the model specified at startup (`MLX_MODEL`). To switch models, restart the server with the desired model:
+All 4 models will appear in the chat dropdown: `phi-4`, `qwen3-14b`, and `qwen2.5-coder-14b`. The server always runs the model specified at startup (`MLX_MODEL`). To switch models, restart the server with the desired model:
 
 ```bash
 # Stop the server with Ctrl-C, then start with a different model
@@ -165,7 +166,7 @@ Code-Local-16Gb/
  ├── setup.sh                  ← One-command installer
  ├── launchers/                ← Desktop launchers for the Mac
  ├── scripts/start-mlx-server.sh
- ├── scripts/download-models.sh    ← Pre-download all models
+ ├── scripts/download-models.sh    ← Pre-download all 4 models
  └── README.md
 ```
 

@@ -48,6 +48,7 @@ AVAILABLE_MODELS = {
     "phi-4": "mlx-community/phi-4-4bit",
     "qwen3-14b": "mlx-community/Qwen3-14B-4bit",
     "qwen2.5-coder-14b": "mlx-community/Qwen2.5-Coder-14B-Instruct-4bit",
+    "deepseek-r1-14b": "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit",
 }
 
 

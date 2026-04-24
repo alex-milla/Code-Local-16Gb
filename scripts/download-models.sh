@@ -22,6 +22,7 @@ MODELS=(
     "mlx-community/phi-4-4bit"
     "mlx-community/Qwen3-14B-4bit"
     "mlx-community/Qwen2.5-Coder-14B-Instruct-4bit"
+    "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit"
 )
 
 echo "=========================================="
