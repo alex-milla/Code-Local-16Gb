@@ -86,6 +86,20 @@ The server will listen on all network interfaces (`0.0.0.0:4000`) so other devic
 
 **Do not close this Terminal window.** The server must stay running.
 
+### Auto-start on boot (optional)
+
+If you want the server to start automatically when the Mac turns on (no Terminal needed):
+
+```bash
+bash scripts/install-auto-start.sh
+```
+
+This creates a macOS LaunchAgent that runs the server in the background on every login. Edit `~/.config/claude-code-local-16gb/server.conf` to change the default model. To remove it later:
+
+```bash
+bash scripts/uninstall-auto-start.sh
+```
+
 ---
 
 ## Client Setup (Windows / Linux / Mac)
@@ -167,6 +181,8 @@ Code-Local-16Gb/
  ├── launchers/                ← Desktop launchers for the Mac
  ├── scripts/start-mlx-server.sh
  ├── scripts/download-models.sh    ← Pre-download all 4 models
+ ├── scripts/install-auto-start.sh ← Auto-start on Mac boot
+ ├── scripts/uninstall-auto-start.sh
  └── README.md
 ```
 
