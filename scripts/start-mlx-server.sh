@@ -10,10 +10,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SERVER_SCRIPT="$PROJECT_ROOT/proxy/server.py"
 
-# Default model if not set
+# Load user config if it exists (created by install-auto-start.sh)
+CONFIG_FILE="$HOME/.config/claude-code-local-16gb/server.conf"
+if [[ -f "$CONFIG_FILE" ]]; then
+    source "$CONFIG_FILE"
+fi
+
+# Defaults: bind to all interfaces so other devices on the network can connect
 MODEL="${MLX_MODEL:-mlx-community/phi-4-4bit}"
 PORT="${MLX_PORT:-4000}"
-BIND="${MLX_BIND_HOST:-127.0.0.1}"
+BIND="${MLX_BIND_HOST:-0.0.0.0}"
 
 # Detect virtual environment
 PYTHON=""
