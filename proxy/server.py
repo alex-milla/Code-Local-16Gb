@@ -764,14 +764,14 @@ def generate_response(body):
     """Run MLX inference and return Anthropic-formatted response."""
     global _first_request
 
-    # Auto-switch model if requested
+    # Manual model switching only: log a warning if the requested model
+    # differs from the currently loaded one, but do NOT auto-switch.
+    # The user must restart the server with MLX_MODEL=<id> to change models.
     requested_model = body.get("model", "")
     target_path = resolve_model_path(requested_model)
     if target_path != MODEL_PATH:
-        log(f"Model switch requested: {MODEL_PATH} → {target_path}")
-        with generate_lock:
-            load_model(target_path)
-            _first_request = True
+        log(f"WARNING: Requested model '{requested_model}' does not match loaded model '{MODEL_PATH}'.")
+        log(f"  To switch models, restart the server with: MLX_MODEL={target_path}")
 
     # In browser mode, strip Claude Code bloat before inference.
     # Otherwise, auto-detect Claude Code coding sessions and apply code mode.
