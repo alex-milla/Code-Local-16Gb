@@ -12,8 +12,8 @@ echo "=========================================="
 echo ""
 
 # 1. Stop
-bash "$SCRIPT_DIR/stop-server.sh"
+bash "$SCRIPT_DIR/stop-mlx-server.sh"
 echo ""
 
 # 2. Start
-bash "$SCRIPT_DIR/start-server.sh"
+bash "$SCRIPT_DIR/start-mlx-server.sh"

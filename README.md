@@ -106,13 +106,13 @@ Whether you use auto-start or manual mode, these scripts control the server:
 
 ```bash
 # Start manually (foreground, Ctrl-C to stop)
-bash scripts/start-server.sh
+bash scripts/start-mlx-server.sh
 
 # Stop any running server (auto-start or manual)
-bash scripts/stop-server.sh
+bash scripts/stop-mlx-server.sh
 
 # Stop and start again (useful after code updates)
-bash scripts/restart-server.sh
+bash scripts/restart-mlx-server.sh
 ```
 
 ---
@@ -191,10 +191,9 @@ Code-Local-16Gb/
  ├── proxy/server.py          ← MLX server (Anthropic + OpenAI API)
  ├── setup.sh                  ← One-command installer
  ├── launchers/                ← Desktop launchers for the Mac
- ├── scripts/start-server.sh       ← Start manually (foreground)
- ├── scripts/stop-server.sh        ← Stop any running instance
- ├── scripts/restart-server.sh     ← Stop + start (after updates)
- ├── scripts/start-mlx-server.sh   ← Legacy launcher
+ ├── scripts/start-mlx-server.sh   ← Start manually (foreground)
+ ├── scripts/stop-mlx-server.sh    ← Stop any running instance
+ ├── scripts/restart-mlx-server.sh ← Stop + start (after updates)
  ├── scripts/download-models.sh    ← Pre-download all 4 models
  ├── scripts/install-auto-start.sh ← Auto-start on Mac boot
  ├── scripts/uninstall-auto-start.sh
